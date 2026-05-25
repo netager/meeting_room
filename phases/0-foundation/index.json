@@ -23,7 +23,7 @@
       "name": "core-infra",
       "status": "completed",
       "started_at": "2026-05-25T16:32:05+0900",
-      "completed_at": "2026-05-25T16:36:00+0900",
+      "completed_at": "2026-05-25T16:36:13+0900",
       "summary": "core-infra 완성: config/db/dependencies 스켈레톤/미들웨어(RequestId+Audit)/보안헤더/전역예외핸들러/헬스체크. structlog 설정 완료"
     }
   ],
