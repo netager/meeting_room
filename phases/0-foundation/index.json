@@ -7,7 +7,8 @@
       "name": "project-setup",
       "status": "completed",
       "started_at": "2026-05-25T16:19:05+0900",
-      "summary": "backend/frontend 프로젝트 초기 구조 생성 완료. 의존성: fastapi+sqlalchemy+alembic+jose+passlib+structlog+apscheduler / svelte+vite+tailwindcss v4"
+      "summary": "backend/frontend 프로젝트 초기 구조 생성 완료. 의존성: fastapi+sqlalchemy+alembic+jose+passlib+structlog+apscheduler / svelte+vite+tailwindcss v4",
+      "completed_at": "2026-05-25T16:25:31+0900"
     },
     {
       "step": 1,
