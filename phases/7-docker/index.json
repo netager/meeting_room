@@ -1,0 +1,7 @@
+{
+  "project": "회의 및 회의실 관리",
+  "phase": "7-docker",
+  "steps": [
+    { "step": 0, "name": "docker-setup", "status": "pending" }
+  ]
+}

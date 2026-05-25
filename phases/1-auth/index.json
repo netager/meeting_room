@@ -1,0 +1,8 @@
+{
+  "project": "회의 및 회의실 관리",
+  "phase": "1-auth",
+  "steps": [
+    { "step": 0, "name": "auth-backend",  "status": "pending" },
+    { "step": 1, "name": "auth-frontend", "status": "pending" }
+  ]
+}

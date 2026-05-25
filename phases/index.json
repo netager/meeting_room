@@ -1,0 +1,12 @@
+{
+  "phases": [
+    { "dir": "0-foundation", "status": "pending" },
+    { "dir": "1-auth",       "status": "pending" },
+    { "dir": "2-org",        "status": "pending" },
+    { "dir": "3-meeting-room","status": "pending" },
+    { "dir": "4-meeting",    "status": "pending" },
+    { "dir": "5-notification","status": "pending" },
+    { "dir": "6-admin",      "status": "pending" },
+    { "dir": "7-docker",     "status": "pending" }
+  ]
+}

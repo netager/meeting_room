@@ -1,0 +1,10 @@
+[project]
+name = "meeting-room-harness"
+version = "0.1.0"
+description = "Harness scripts for the meeting-room project"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

@@ -1,0 +1,9 @@
+{
+  "project": "회의 및 회의실 관리",
+  "phase": "2-org",
+  "steps": [
+    { "step": 0, "name": "org-backend",   "status": "pending" },
+    { "step": 1, "name": "etl-sync",      "status": "pending" },
+    { "step": 2, "name": "org-admin-ui",  "status": "pending" }
+  ]
+}

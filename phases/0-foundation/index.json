@@ -1,0 +1,9 @@
+{
+  "project": "회의 및 회의실 관리",
+  "phase": "0-foundation",
+  "steps": [
+    { "step": 0, "name": "project-setup", "status": "pending" },
+    { "step": 1, "name": "db-models",     "status": "pending" },
+    { "step": 2, "name": "core-infra",    "status": "pending" }
+  ]
+}
