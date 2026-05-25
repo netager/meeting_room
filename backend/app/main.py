@@ -1,8 +1,10 @@
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException as FastAPIHTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +19,18 @@ configure_logging(settings.app_env)
 
 logger = structlog.get_logger(__name__)
 
-app = FastAPI(title="회의 및 회의실 관리", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.db import AsyncSessionLocal
+    from app.repositories import auth_repo
+
+    async with AsyncSessionLocal() as db:
+        await auth_repo.create_admin_account_if_not_exists(db)
+    yield
+
+
+app = FastAPI(title="회의 및 회의실 관리", version="1.0.0", lifespan=lifespan)
 
 # 미들웨어 등록 순서: RequestIdMiddleware → AuditMiddleware (LIFO: 나중에 add한 게 먼저 실행)
 app.add_middleware(AuditMiddleware)
@@ -33,7 +46,7 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def add_security_headers(request, call_next):
+async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -41,13 +54,49 @@ async def add_security_headers(request, call_next):
     return response
 
 
+@app.exception_handler(FastAPIHTTPException)
+async def http_exception_handler(request: Request, exc: FastAPIHTTPException):
+    if isinstance(exc.detail, dict) and "error" in exc.detail:
+        content = exc.detail
+    else:
+        content = {
+            "error": {
+                "code": "HTTP_ERROR",
+                "message": str(exc.detail) if exc.detail else "요청 처리 중 오류가 발생했습니다",
+            }
+        }
+    headers = dict(exc.headers) if exc.headers else {}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "INVALID_REQUEST",
+                "message": "요청 형식이 올바르지 않습니다",
+                "detail": exc.errors(),
+            }
+        },
+    )
+
+
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
+async def global_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled exception", exc_info=exc, request_id=get_request_id())
     return JSONResponse(
         status_code=500,
         content={"error": {"code": "INTERNAL_ERROR", "message": "서버 내부 오류가 발생했습니다"}},
     )
+
+
+# ── Routers ────────────────────────────────────────────────────────────────────
+
+from app.routers import auth  # noqa: E402
+
+app.include_router(auth.router)
 
 
 @app.get("/api/health")
