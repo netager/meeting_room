@@ -223,9 +223,7 @@ class StepExecutor:
 
     # --- guardrails & context ---
 
-    # 마크다운 문서 내에서 절대 등장하지 않는 구분자.
-    # "\n\n---\n\n" 은 수평선과 충돌하므로 사용하지 않는다.
-    _SECTION_SEP = "\n\n\x00\x00SECTION\x00\x00\n\n"
+    _SECTION_SEP = "\n\n====SECTION====\n\n"
 
     def _load_guardrails(self) -> str:
         sections = []
