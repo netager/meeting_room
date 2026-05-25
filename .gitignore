@@ -48,5 +48,9 @@ frontend/.svelte-kit/
 *.swo
 .DS_Store
 
+# ===== 파일 업로드 =====
+uploads/*
+!uploads/.gitkeep
+
 # ===== Harness 실행 산출물 =====
 phases/**/step*-output.json
