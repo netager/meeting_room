@@ -98,3 +98,15 @@ class PaginatedMeetings(BaseModel):
 
 class AttendeeAdd(BaseModel):
     emp_no: str
+
+
+class MeetingFileResponse(BaseModel):
+    id: str
+    original_name: str
+    mime_type: str
+    size: int
+    uploaded_by: str
+    uploaded_by_name: str
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)

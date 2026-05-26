@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     internal_msg_api_timeout: int = 5
     upload_dir: str = "/app/uploads"
     max_upload_size_mb: int = 50
+    max_file_size: int = 52428800  # 50MB in bytes
+    allowed_extensions: set[str] = {
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+        "jpg", "jpeg", "png", "gif", "zip",
+    }
     admin_reset_token: str = ""
     db_pool_size: int = 10
     db_max_overflow: int = 20
