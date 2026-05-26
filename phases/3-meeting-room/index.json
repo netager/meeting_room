@@ -15,7 +15,7 @@
       "name": "room-frontend",
       "status": "completed",
       "started_at": "2026-05-26T16:09:20+0900",
-      "completed_at": "2026-05-26T16:30:00+0900",
+      "completed_at": "2026-05-26T16:16:56+0900",
       "summary": "회의실 프론트엔드 완성: 목록(상태필터/카드그리드)/상세패널/가용성타임라인/CRUD폼(집기관리/경고Toast). meetingRooms.js API 래퍼 포함"
     }
   ],
