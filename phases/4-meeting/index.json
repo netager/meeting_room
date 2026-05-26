@@ -2,10 +2,34 @@
   "project": "회의 및 회의실 관리",
   "phase": "4-meeting",
   "steps": [
-    { "step": 0, "name": "meeting-backend",  "status": "pending" },
-    { "step": 1, "name": "file-backend",     "status": "pending" },
-    { "step": 2, "name": "meeting-list-ui",  "status": "pending" },
-    { "step": 3, "name": "meeting-form-ui",  "status": "pending" },
-    { "step": 4, "name": "meeting-detail-ui","status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "meeting-backend",
+      "status": "error",
+      "started_at": "2026-05-26T16:48:58+0900",
+      "error_message": "[3회 시도 후 실패] Step did not update status",
+      "failed_at": "2026-05-26T16:54:38+0900"
+    },
+    {
+      "step": 1,
+      "name": "file-backend",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "meeting-list-ui",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "meeting-form-ui",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "meeting-detail-ui",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-26T16:48:58+0900"
 }
