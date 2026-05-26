@@ -39,7 +39,7 @@
       "name": "meeting-detail-ui",
       "status": "completed",
       "started_at": "2026-05-27T07:22:47+0900",
-      "completed_at": "2026-05-27T07:35:00+0900",
+      "completed_at": "2026-05-27T07:27:06+0900",
       "summary": "회의 상세 UI 완성: 참석자/파일목록/취소·완료액션(권한별)/파일다운로드(Blob)/참석자추가·삭제. 동적 라우트 /:id/edit 연결"
     }
   ],
