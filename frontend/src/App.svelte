@@ -8,6 +8,7 @@
   import PasswordChange from './pages/PasswordChange.svelte'
   import Dashboard from './pages/Dashboard.svelte'
   import Admin from './pages/Admin.svelte'
+  import MeetingRooms from './pages/MeetingRooms.svelte'
 
   onMount(async () => {
     window.addEventListener('auth:session-expired', () => {
@@ -29,6 +30,8 @@
   <AppShell>
     {#if $currentRoute === '/admin'}
       <Admin />
+    {:else if $currentRoute === '/rooms' || $currentRoute === '/room-management'}
+      <MeetingRooms />
     {:else}
       <Dashboard />
     {/if}
