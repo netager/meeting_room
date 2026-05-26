@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix\\(harness\\): null byte in section separator causes subprocess ValueError *)",
+      "Bash(python3 scripts/execute.py 0-foundation)",
+      "Bash(tee /tmp/harness-0-foundation.log)",
+      "Bash(python3 scripts/execute.py 1-auth)",
+      "Bash(tee /tmp/harness-1-auth.log)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d['stdout'][-3000:]\\)\")",
+      "Bash(python3 scripts/execute.py 3-meeting-room)",
+      "Bash(tee /tmp/harness-3-meeting-room.log)",
+      "Bash(python3 scripts/execute.py 4-meeting)",
+      "Bash(tee /tmp/harness-4-meeting.log)"
+    ]
+  }
+}
