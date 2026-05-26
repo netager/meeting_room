@@ -12,8 +12,9 @@
     },
     {
       "dir": "2-org",
-      "status": "error",
-      "failed_at": "2026-05-26T10:15:47+0900"
+      "status": "completed",
+      "failed_at": "2026-05-26T10:15:47+0900",
+      "completed_at": "2026-05-26T15:38:42+0900"
     },
     {
       "dir": "3-meeting-room",
