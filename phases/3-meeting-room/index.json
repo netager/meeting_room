@@ -2,7 +2,19 @@
   "project": "회의 및 회의실 관리",
   "phase": "3-meeting-room",
   "steps": [
-    { "step": 0, "name": "room-backend",  "status": "pending" },
-    { "step": 1, "name": "room-frontend", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "room-backend",
+      "status": "completed",
+      "started_at": "2026-05-26T16:04:31+0900",
+      "completed_at": "2026-05-26T16:30:00+0900",
+      "summary": "회의실/집기 CRUD API 완성. 상태 전이 규칙/폐쇄 경고/삭제 제약/예약 현황 API 포함. 이력 기록 포함. 17개 테스트 통과"
+    },
+    {
+      "step": 1,
+      "name": "room-frontend",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-26T16:04:31+0900"
 }
