@@ -15,7 +15,7 @@
       "name": "file-backend",
       "status": "completed",
       "started_at": "2026-05-26T23:07:56+0900",
-      "completed_at": "2026-05-26T23:30:00+0900",
+      "completed_at": "2026-05-26T23:11:40+0900",
       "summary": "파일 업로드/다운로드/삭제 API 완성. 확장자/크기 검증, UUID 저장경로, 참석자 권한 확인, 물리파일+DB 동시삭제(best-effort), RFC5987 한글 파일명 인코딩"
     },
     {
