@@ -19,5 +19,6 @@
       "summary": "인증 프론트엔드 완성: fetch래퍼(SilentRefresh+pendingQueue)/auth store/Toast 시스템/해시 라우터/Login.svelte/PasswordChange.svelte/AppShell.svelte. 빌드·린트·백엔드 테스트 20개 통과"
     }
   ],
-  "created_at": "2026-05-25T16:36:36+0900"
+  "created_at": "2026-05-25T16:36:36+0900",
+  "completed_at": "2026-05-26T09:24:53+0900"
 }
