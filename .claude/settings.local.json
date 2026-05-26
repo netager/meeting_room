@@ -12,7 +12,9 @@
       "Bash(tee /tmp/harness-3-meeting-room.log)",
       "Bash(python3 scripts/execute.py 4-meeting)",
       "Bash(tee /tmp/harness-4-meeting.log)",
-      "Bash(tee /tmp/harness-4-meeting-retry.log)"
+      "Bash(tee /tmp/harness-4-meeting-retry.log)",
+      "Bash(python3 scripts/execute.py 5-notification)",
+      "Bash(tee /tmp/harness-5-notification.log)"
     ]
   }
 }
