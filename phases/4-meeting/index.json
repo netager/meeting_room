@@ -7,7 +7,7 @@
       "name": "meeting-backend",
       "status": "completed",
       "started_at": "2026-05-26T22:59:43+0900",
-      "completed_at": "2026-05-26T23:30:00+0900",
+      "completed_at": "2026-05-26T23:07:56+0900",
       "summary": "회의 CRUD API 완성. SELECT FOR UPDATE NOWAIT 예약충돌방지/상태전이(SCHEDULED→CANCELLED/COMPLETED)/수정권한(주최자+admin)/참석자관리. 이력기록 포함"
     },
     {
