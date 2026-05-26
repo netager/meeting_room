@@ -95,8 +95,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ── Routers ────────────────────────────────────────────────────────────────────
 
 from app.routers import auth  # noqa: E402
+from app.routers import employees, departments  # noqa: E402
 
 app.include_router(auth.router)
+app.include_router(employees.router)
+app.include_router(departments.router)
 
 
 @app.get("/api/health")

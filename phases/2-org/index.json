@@ -2,8 +2,24 @@
   "project": "회의 및 회의실 관리",
   "phase": "2-org",
   "steps": [
-    { "step": 0, "name": "org-backend",   "status": "pending" },
-    { "step": 1, "name": "etl-sync",      "status": "pending" },
-    { "step": 2, "name": "org-admin-ui",  "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "org-backend",
+      "status": "completed",
+      "started_at": "2026-05-26T10:00:14+0900",
+      "completed_at": "2026-05-26T10:30:00+0900",
+      "summary": "부서/팀/직원 CRUD API + Repository 완성. 이력 기록 포함. 참석자 선택용 검색 API 포함"
+    },
+    {
+      "step": 1,
+      "name": "etl-sync",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "org-admin-ui",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-26T10:00:14+0900"
 }
