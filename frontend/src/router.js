@@ -1,9 +1,10 @@
 import { writable } from 'svelte/store'
 import { get } from 'svelte/store'
-import { isAuthenticated, isInitialPassword } from './lib/stores/auth.js'
+import { isAuthenticated, isInitialPassword, currentUser } from './lib/stores/auth.js'
 
 const PUBLIC_ROUTES = new Set(['/login'])
 const PASSWORD_CHANGE_ROUTE = '/password-change'
+const ADMIN_ROUTES = new Set(['/admin'])
 
 function getHashRoute() {
   const hash = window.location.hash
@@ -21,6 +22,7 @@ export function navigateTo(path) {
 function guard(path) {
   const authed = get(isAuthenticated)
   const needsPasswordChange = get(isInitialPassword)
+  const user = get(currentUser)
 
   if (!authed && !PUBLIC_ROUTES.has(path)) {
     navigateTo('#/login')
@@ -33,6 +35,11 @@ function guard(path) {
   }
 
   if (authed && path === '/login') {
+    navigateTo('#/')
+    return '/'
+  }
+
+  if (authed && ADMIN_ROUTES.has(path) && !user?.is_admin) {
     navigateTo('#/')
     return '/'
   }

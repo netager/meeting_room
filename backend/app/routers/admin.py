@@ -4,13 +4,78 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import get_db
 from app.dependencies import require_admin
+from app.models import AuditLog
+from app.repositories import org_repo
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def _actor_id(user) -> str:
+    from app.models import AdminAccount
+    if isinstance(user, AdminAccount):
+        return "admin"
+    return user.emp_no
+
+
+# ── 직원 권한 관리 ─────────────────────────────────────────────────────────────
+
+
+class PermissionsUpdate(BaseModel):
+    is_admin: bool
+    is_room_manager: bool
+
+
+@router.put("/employees/{emp_no}/permissions")
+async def update_employee_permissions(
+    emp_no: str,
+    body: PermissionsUpdate,
+    user=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.schemas.org import EmployeeResponse
+
+    emp = await org_repo.update_permissions(
+        emp_no, body.is_admin, body.is_room_manager, _actor_id(user), db
+    )
+    return EmployeeResponse.model_validate(emp)
+
+
+# ── 감사 로그 조회 ─────────────────────────────────────────────────────────────
+
+
+@router.get("/audit-logs")
+async def list_audit_logs(
+    action: Optional[str] = None,
+    limit: int = 20,
+    _user=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    if limit > 100:
+        limit = 100
+    q = select(AuditLog)
+    if action:
+        q = q.where(AuditLog.action == action)
+    q = q.order_by(desc(AuditLog.created_at)).limit(limit)
+    result = await db.execute(q)
+    logs = result.scalars().all()
+    return [
+        {
+            "id": log.id,
+            "actor": log.actor,
+            "action": log.action,
+            "target_table": log.target_table,
+            "target_id": log.target_id,
+            "detail": log.detail,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        }
+        for log in logs
+    ]
 
 
 # ── ETL 동기화 ─────────────────────────────────────────────────────────────────
