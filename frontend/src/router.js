@@ -6,13 +6,49 @@ const PUBLIC_ROUTES = new Set(['/login'])
 const PASSWORD_CHANGE_ROUTE = '/password-change'
 const ADMIN_ROUTES = new Set(['/admin'])
 
-function getHashRoute() {
-  const hash = window.location.hash
-  if (!hash || hash === '#' || hash === '#/') return '/'
-  return hash.slice(1) // remove '#'
+// Static routes checked before dynamic patterns
+const STATIC_ROUTES = new Set([
+  '/',
+  '/login',
+  '/password-change',
+  '/meetings',
+  '/meetings/new',
+  '/rooms',
+  '/room-management',
+  '/admin',
+])
+
+// Dynamic route patterns — order matters (more specific first)
+const DYNAMIC_PATTERNS = [
+  { pattern: /^\/meetings\/([^/]+)$/, route: '/meetings/:id', paramKeys: ['id'] },
+]
+
+function parseHash(hash) {
+  if (!hash || hash === '#' || hash === '#/') return { path: '/', params: {} }
+  const rawPath = hash.slice(1) // remove '#'
+
+  if (STATIC_ROUTES.has(rawPath)) return { path: rawPath, params: {} }
+
+  for (const def of DYNAMIC_PATTERNS) {
+    const match = rawPath.match(def.pattern)
+    if (match) {
+      const params = {}
+      def.paramKeys.forEach((key, i) => {
+        params[key] = match[i + 1]
+      })
+      return { path: def.route, params }
+    }
+  }
+
+  return { path: rawPath, params: {} }
 }
 
-export const currentRoute = writable(getHashRoute())
+function getHashParsed() {
+  return parseHash(window.location.hash)
+}
+
+export const currentRoute = writable(getHashParsed().path)
+export const routeParams = writable(getHashParsed().params)
 
 export function navigateTo(path) {
   const hash = path.startsWith('#') ? path : '#' + path
@@ -49,18 +85,21 @@ function guard(path) {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
-    const raw = getHashRoute()
-    const guarded = guard(raw)
+    const parsed = getHashParsed()
+    const guarded = guard(parsed.path)
     currentRoute.set(guarded)
+    routeParams.set(guarded === parsed.path ? parsed.params : {})
   })
 }
 
 export function initRouter() {
-  const raw = getHashRoute()
-  const guarded = guard(raw)
-  if (guarded !== raw) {
+  const parsed = getHashParsed()
+  const guarded = guard(parsed.path)
+  if (guarded !== parsed.path) {
     currentRoute.set(guarded)
+    routeParams.set({})
   } else {
-    currentRoute.set(raw)
+    currentRoute.set(parsed.path)
+    routeParams.set(parsed.params)
   }
 }

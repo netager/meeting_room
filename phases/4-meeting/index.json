@@ -21,10 +21,10 @@
     {
       "step": 2,
       "name": "meeting-list-ui",
-      "status": "error",
-      "started_at": "2026-05-26T23:11:40+0900",
-      "error_message": "[3회 시도 후 실패] Step did not update status",
-      "failed_at": "2026-05-26T23:16:37+0900"
+      "status": "completed",
+      "started_at": "2026-05-27T07:06:12+0900",
+      "completed_at": "2026-05-27T07:30:00+0900",
+      "summary": "회의 목록 UI 완성: Dashboard(내 회의 요약+7일 목록)/MeetingList(필터/테이블/페이지네이션). meetings.js API 래퍼 포함. 동적 라우트 파싱 구현"
     },
     {
       "step": 3,
