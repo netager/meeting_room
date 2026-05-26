@@ -63,6 +63,8 @@ async def db():
     create_savepoint mode: session.commit() releases savepoints instead of
     committing the outer transaction, so all changes are rolled back at teardown.
     """
+    from sqlalchemy import select
+
     engine = create_async_engine(settings.database_url, poolclass=NullPool, echo=False)
     try:
         async with engine.connect() as connection:
@@ -74,9 +76,14 @@ async def db():
             )
 
             # Common test data: a department (required by Employee FK)
-            dept = Department(code="TESTDEPT", name="테스트부서")
-            session.add(dept)
-            await session.flush()
+            # Use upsert logic in case TESTDEPT already exists in the real DB
+            result = await session.execute(
+                select(Department).where(Department.code == "TESTDEPT")
+            )
+            if result.scalar_one_or_none() is None:
+                dept = Department(code="TESTDEPT", name="테스트부서")
+                session.add(dept)
+                await session.flush()
 
             yield session
 
@@ -91,13 +98,23 @@ async def db():
 
 @pytest_asyncio.fixture
 async def test_admin(db: AsyncSession) -> AdminAccount:
-    """Admin account in test transaction (is_initial_password=False)."""
-    admin = AdminAccount(
-        username="admin",
-        password_hash="$test$admin123",
-        is_initial_password=False,
-    )
-    db.add(admin)
+    """Admin account in test transaction (is_initial_password=False).
+    Uses upsert logic to handle pre-existing admin committed to real DB.
+    """
+    from sqlalchemy import select
+
+    result = await db.execute(select(AdminAccount).where(AdminAccount.username == "admin"))
+    admin = result.scalar_one_or_none()
+    if admin is None:
+        admin = AdminAccount(
+            username="admin",
+            password_hash="$test$admin123",
+            is_initial_password=False,
+        )
+        db.add(admin)
+    else:
+        admin.password_hash = "$test$admin123"
+        admin.is_initial_password = False
     await db.flush()
     return admin
 
