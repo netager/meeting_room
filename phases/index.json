@@ -23,7 +23,8 @@
     },
     {
       "dir": "4-meeting",
-      "status": "pending"
+      "status": "error",
+      "failed_at": "2026-05-26T16:54:38+0900"
     },
     {
       "dir": "5-notification",

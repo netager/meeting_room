@@ -5,10 +5,10 @@
     {
       "step": 0,
       "name": "meeting-backend",
-      "status": "error",
-      "started_at": "2026-05-26T16:48:58+0900",
-      "error_message": "[3회 시도 후 실패] Step did not update status",
-      "failed_at": "2026-05-26T16:54:38+0900"
+      "status": "completed",
+      "started_at": "2026-05-26T22:59:43+0900",
+      "completed_at": "2026-05-26T23:30:00+0900",
+      "summary": "회의 CRUD API 완성. SELECT FOR UPDATE NOWAIT 예약충돌방지/상태전이(SCHEDULED→CANCELLED/COMPLETED)/수정권한(주최자+admin)/참석자관리. 이력기록 포함"
     },
     {
       "step": 1,
