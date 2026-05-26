@@ -23,7 +23,7 @@
       "name": "meeting-list-ui",
       "status": "completed",
       "started_at": "2026-05-27T07:06:12+0900",
-      "completed_at": "2026-05-27T07:30:00+0900",
+      "completed_at": "2026-05-27T07:12:03+0900",
       "summary": "회의 목록 UI 완성: Dashboard(내 회의 요약+7일 목록)/MeetingList(필터/테이블/페이지네이션). meetings.js API 래퍼 포함. 동적 라우트 파싱 구현"
     },
     {
