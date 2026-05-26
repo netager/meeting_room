@@ -15,7 +15,7 @@
       "name": "etl-sync",
       "status": "completed",
       "started_at": "2026-05-26T10:03:59+0900",
-      "completed_at": "2026-05-26T10:10:00+0900",
+      "completed_at": "2026-05-26T10:09:31+0900",
       "summary": "ETL 동기화 배치 완성: sync_service(신규/변경/퇴직/복원 처리)/APScheduler(KST cron)/admin 수동실행 API/Mock 스테이징 API. 안전장치(빈스테이징 중단) 포함"
     },
     {
