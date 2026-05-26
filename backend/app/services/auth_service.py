@@ -196,7 +196,11 @@ async def login(
     at = await create_access_token(
         emp_no,
         is_admin=emp.is_admin,
-        extra={"is_initial_password": emp.is_initial_password},
+        extra={
+            "is_initial_password": emp.is_initial_password,
+            "is_room_manager": emp.is_room_manager,
+            "name": emp.name,
+        },
     )
     rt, _jti = await create_refresh_token(emp_no)
 
@@ -231,7 +235,11 @@ async def admin_login(
     at = await create_access_token(
         "admin",
         is_admin=True,
-        extra={"is_initial_password": admin.is_initial_password},
+        extra={
+            "is_initial_password": admin.is_initial_password,
+            "is_room_manager": True,
+            "name": "관리자",
+        },
     )
     rt, _jti = await create_refresh_token("admin")
 
@@ -284,7 +292,27 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession) -> str:
     await auth_repo.mark_token_used(jti, expires_at, db)
 
     is_admin = sub == "admin"
-    new_at = await create_access_token(sub, is_admin=is_admin)
+
+    # Fetch current user state for fresh JWT claims
+    is_initial_password = False
+    is_room_manager = is_admin
+    name = "관리자" if sub == "admin" else sub
+    if sub == "admin":
+        admin = await auth_repo.get_admin_account(db)
+        if admin:
+            is_initial_password = admin.is_initial_password
+    else:
+        emp = await auth_repo.get_employee_by_emp_no(sub, db)
+        if emp:
+            is_initial_password = emp.is_initial_password
+            is_room_manager = emp.is_room_manager
+            name = emp.name
+
+    new_at = await create_access_token(sub, is_admin=is_admin, extra={
+        "is_initial_password": is_initial_password,
+        "is_room_manager": is_room_manager,
+        "name": name,
+    })
     return new_at
 
 
