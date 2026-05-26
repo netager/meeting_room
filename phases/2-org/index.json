@@ -7,7 +7,7 @@
       "name": "org-backend",
       "status": "completed",
       "started_at": "2026-05-26T10:00:14+0900",
-      "completed_at": "2026-05-26T10:30:00+0900",
+      "completed_at": "2026-05-26T10:03:59+0900",
       "summary": "부서/팀/직원 CRUD API + Repository 완성. 이력 기록 포함. 참석자 선택용 검색 API 포함"
     },
     {
