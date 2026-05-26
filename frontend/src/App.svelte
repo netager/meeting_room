@@ -39,6 +39,8 @@
       <MeetingList />
     {:else if $currentRoute === '/meetings/new'}
       <MeetingForm />
+    {:else if $currentRoute === '/meetings/:id/edit'}
+      <MeetingForm meetingId={$routeParams.id} />
     {:else if $currentRoute === '/meetings/:id'}
       <MeetingDetail meetingId={$routeParams.id} />
     {:else}

@@ -1,4 +1,4 @@
-import { get, post, put, del, request } from './client.js'
+import { get, post, put, del, request, getAccessToken } from './client.js'
 
 export async function listMeetings(params = {}) {
   const qs = new URLSearchParams()
@@ -71,4 +71,32 @@ export async function addAttendee(meetingId, empNo) {
 
 export async function removeAttendee(meetingId, empNo) {
   return del(`/meetings/${meetingId}/attendees/${empNo}`)
+}
+
+export function uploadFile(meetingId, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+    })
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)) } catch { resolve({}) }
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          reject(new Error(data?.error?.message || '업로드 실패'))
+        } catch {
+          reject(new Error('업로드 실패'))
+        }
+      }
+    })
+    xhr.addEventListener('error', () => reject(new Error('네트워크 오류로 업로드 실패')))
+    xhr.open('POST', `/api/meetings/${meetingId}/files`)
+    const token = getAccessToken()
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    const fd = new FormData()
+    fd.append('file', file)
+    xhr.send(fd)
+  })
 }

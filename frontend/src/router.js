@@ -20,6 +20,7 @@ const STATIC_ROUTES = new Set([
 
 // Dynamic route patterns — order matters (more specific first)
 const DYNAMIC_PATTERNS = [
+  { pattern: /^\/meetings\/([^/]+)\/edit$/, route: '/meetings/:id/edit', paramKeys: ['id'] },
   { pattern: /^\/meetings\/([^/]+)$/, route: '/meetings/:id', paramKeys: ['id'] },
 ]
 
@@ -52,6 +53,11 @@ export const routeParams = writable(getHashParsed().params)
 
 export function navigateTo(path) {
   const hash = path.startsWith('#') ? path : '#' + path
+  const event = new CustomEvent('before-navigate', {
+    detail: { to: hash },
+    cancelable: true,
+  })
+  if (!window.dispatchEvent(event)) return
   window.location.hash = hash
 }
 

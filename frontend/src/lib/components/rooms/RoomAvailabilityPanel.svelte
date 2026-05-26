@@ -2,14 +2,21 @@
   import { getRoomSchedule } from '../../api/meetingRooms.js'
   import { showToast } from '../../stores/toast.js'
 
-  let { roomId, initialDate = null } = $props()
+  let {
+    roomId,
+    initialDate = null,
+    controlledDate = null,
+    selectedStart = null,
+    selectedEnd = null,
+  } = $props()
 
   function todayStr() {
     const d = new Date()
     return d.toISOString().slice(0, 10)
   }
 
-  let selectedDate = $state(initialDate || todayStr())
+  let internalDate = $state(initialDate || todayStr())
+  let selectedDate = $derived(controlledDate || internalDate)
   let slots = $state([])
   let loading = $state(false)
 
@@ -51,6 +58,26 @@
     return map
   })())
 
+  let selectedSlotMap = $derived((() => {
+    if (!selectedStart || !selectedEnd) return new Array(SLOT_COUNT).fill(false)
+    const startMin = timeToMinutes(selectedStart)
+    const endMin = timeToMinutes(selectedEnd)
+    return Array.from({ length: SLOT_COUNT }, (_, i) => {
+      const slotStart = HOUR_START * 60 + i * 30
+      const slotEnd = slotStart + 30
+      return slotStart < endMin && slotEnd > startMin
+    })
+  })())
+
+  function getSlotType(i) {
+    const hasExisting = !!slotMap[i]
+    const isSelected = selectedSlotMap[i]
+    if (isSelected && hasExisting) return 'conflict'
+    if (isSelected) return 'selected'
+    if (hasExisting) return 'existing'
+    return 'free'
+  }
+
   function isPastSlot(slotIdx) {
     const now = new Date()
     const todayLocal = now.toISOString().slice(0, 10)
@@ -82,11 +109,11 @@
   }
 
   function prevDay() {
-    selectedDate = shiftDate(selectedDate, -1)
+    internalDate = shiftDate(internalDate, -1)
   }
 
   function nextDay() {
-    selectedDate = shiftDate(selectedDate, 1)
+    internalDate = shiftDate(internalDate, 1)
   }
 
   $effect(() => {
@@ -97,19 +124,23 @@
 <div class="space-y-3">
   <!-- Date navigation -->
   <div class="flex items-center gap-3">
-    <button
-      onclick={prevDay}
-      class="rounded border border-neutral-700 text-neutral-300 hover:bg-[#1f1f1f] px-2 py-1 text-xs transition-colors"
-    >
-      ◀ 이전
-    </button>
+    {#if !controlledDate}
+      <button
+        onclick={prevDay}
+        class="rounded border border-neutral-700 text-neutral-300 hover:bg-[#1f1f1f] px-2 py-1 text-xs transition-colors"
+      >
+        ◀ 이전
+      </button>
+    {/if}
     <span class="text-sm text-white font-medium flex-1 text-center">{selectedDate}</span>
-    <button
-      onclick={nextDay}
-      class="rounded border border-neutral-700 text-neutral-300 hover:bg-[#1f1f1f] px-2 py-1 text-xs transition-colors"
-    >
-      다음 ▶
-    </button>
+    {#if !controlledDate}
+      <button
+        onclick={nextDay}
+        class="rounded border border-neutral-700 text-neutral-300 hover:bg-[#1f1f1f] px-2 py-1 text-xs transition-colors"
+      >
+        다음 ▶
+      </button>
+    {/if}
   </div>
 
   <!-- Timeline -->
@@ -122,6 +153,7 @@
   {:else}
     <div class="space-y-0.5">
       {#each slotIndices as i (i)}
+        {@const slotType = getSlotType(i)}
         {@const info = slotMap[i]}
         <div class="flex items-center gap-2">
           {#if i % 2 === 0}
@@ -129,13 +161,24 @@
           {:else}
             <span class="text-xs text-neutral-600 w-10 shrink-0"></span>
           {/if}
-          {#if info}
+          {#if slotType === 'conflict'}
             <div
-              class="flex-1 h-5 rounded-sm bg-blue-500/30 border border-blue-500/40 px-1 overflow-hidden"
-              title="{info.title} ({info.start_time}~{info.end_time})"
+              class="flex-1 h-5 rounded-sm bg-red-500/40 border border-red-500/50 px-1 overflow-hidden"
+              title="{info?.title} ({info?.start_time}~{info?.end_time}) — 충돌"
             >
-              {#if info.isStart}
-                <span class="text-xs text-blue-300 truncate block leading-5">{info.title}</span>
+              {#if info?.isStart}
+                <span class="text-xs text-red-300 truncate block leading-5">{info.title}</span>
+              {/if}
+            </div>
+          {:else if slotType === 'selected'}
+            <div class="flex-1 h-5 rounded-sm bg-blue-500/30 border border-blue-500/40"></div>
+          {:else if slotType === 'existing'}
+            <div
+              class="flex-1 h-5 rounded-sm bg-neutral-700/60 border border-neutral-600/40 px-1 overflow-hidden"
+              title="{info?.title} ({info?.start_time}~{info?.end_time})"
+            >
+              {#if info?.isStart}
+                <span class="text-xs text-neutral-400 truncate block leading-5">{info.title}</span>
               {/if}
             </div>
           {:else}

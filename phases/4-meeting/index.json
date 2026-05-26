@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "meeting-form-ui",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-27T07:12:03+0900",
+      "completed_at": "2026-05-27T07:30:00+0900",
+      "summary": "회의 신청/수정 폼 완성: 회의실가용성패널/참석자선택기(debounce)/XHR파일업로드(progress)/dirty상태이탈경고/충돌에러인라인표시"
     },
     {
       "step": 4,
