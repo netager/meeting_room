@@ -24,10 +24,14 @@ logger = structlog.get_logger(__name__)
 async def lifespan(app: FastAPI):
     from app.db import AsyncSessionLocal
     from app.repositories import auth_repo
+    from app.scheduler import setup_scheduler, shutdown_scheduler
 
     async with AsyncSessionLocal() as db:
         await auth_repo.create_admin_account_if_not_exists(db)
+
+    setup_scheduler(app)
     yield
+    shutdown_scheduler()
 
 
 app = FastAPI(title="회의 및 회의실 관리", version="1.0.0", lifespan=lifespan)
@@ -95,11 +99,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ── Routers ────────────────────────────────────────────────────────────────────
 
 from app.routers import auth  # noqa: E402
-from app.routers import employees, departments  # noqa: E402
+from app.routers import employees, departments, admin  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(employees.router)
 app.include_router(departments.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health")
