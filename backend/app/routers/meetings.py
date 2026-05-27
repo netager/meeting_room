@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +20,7 @@ from app.schemas.meeting import (
     MeetingUpdate,
     PaginatedMeetings,
 )
+from app.services import notification_service
 
 import datetime
 
@@ -119,6 +120,7 @@ async def list_meetings(
 @router.post("", response_model=MeetingResponse, status_code=201)
 async def create_meeting(
     body: MeetingCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user=Depends(require_active_user),
 ):
@@ -137,6 +139,18 @@ async def create_meeting(
         created_by=user.emp_no,
         db=db,
     )
+    # Notify all attendees except the creator
+    recipients = [
+        a.emp_no for a in meeting.attendees if a.emp_no != user.emp_no
+    ]
+    if recipients:
+        background_tasks.add_task(
+            notification_service.send_meeting_notification,
+            meeting.id,
+            "CREATED",
+            recipients,
+            db,
+        )
     return _meeting_response(meeting)
 
 
@@ -159,6 +173,7 @@ async def get_meeting(
 async def update_meeting(
     meeting_id: str,
     body: MeetingUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user=Depends(require_active_user),
 ):
@@ -169,12 +184,23 @@ async def update_meeting(
         db=db,
         is_admin=_is_admin(user),
     )
+    # Notify all current attendees about the update
+    recipients = [a.emp_no for a in meeting.attendees]
+    if recipients:
+        background_tasks.add_task(
+            notification_service.send_meeting_notification,
+            meeting.id,
+            "UPDATED",
+            recipients,
+            db,
+        )
     return _meeting_response(meeting)
 
 
 @router.delete("/{meeting_id}", response_model=MeetingResponse)
 async def cancel_meeting(
     meeting_id: str,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user=Depends(require_active_user),
 ):
@@ -184,12 +210,23 @@ async def cancel_meeting(
         db=db,
         is_admin=_is_admin(user),
     )
+    # Notify all attendees (including the canceller) about cancellation
+    recipients = [a.emp_no for a in meeting.attendees]
+    if recipients:
+        background_tasks.add_task(
+            notification_service.send_meeting_notification,
+            meeting.id,
+            "CANCELLED",
+            recipients,
+            db,
+        )
     return _meeting_response(meeting)
 
 
 @router.post("/{meeting_id}/complete", response_model=MeetingResponse)
 async def complete_meeting(
     meeting_id: str,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user=Depends(require_admin),
 ):
@@ -198,6 +235,8 @@ async def complete_meeting(
         completed_by=_actor_id(user),
         db=db,
     )
+    # Notify attendees about completion (per PRD: no notification for completion)
+    # PRD §6: 상태 예정→완료: 알림 없음
     return _meeting_response(meeting)
 
 

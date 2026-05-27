@@ -33,6 +33,8 @@ def setup_scheduler(app) -> None:  # noqa: ANN001
     """FastAPI startup 이벤트에서 호출."""
     from app.db import AsyncSessionLocal
     from app.services import sync_service
+    from app.services import notification_service
+    from app.repositories import notification_repo
 
     cron_kwargs = _parse_cron(settings.sync_cron)
 
@@ -44,6 +46,19 @@ def setup_scheduler(app) -> None:  # noqa: ANN001
                 await sync_service.run(db, triggered_by="scheduler")
             except Exception:
                 logger.error("sync_job_failed", exc_info=True)
+
+    @scheduler.scheduled_job("interval", minutes=5)
+    async def retry_notifications() -> None:
+        """Retry FAILED or PENDING notifications (up to retry_count < 3)."""
+        async with AsyncSessionLocal() as db:
+            try:
+                pending = await notification_repo.get_pending_logs(db)
+                if pending:
+                    logger.info("notification_retry_started", count=len(pending))
+                for log in pending:
+                    await notification_service._send_one(log.id, db)
+            except Exception:
+                logger.error("notification_retry_failed", exc_info=True)
 
     scheduler.start()
     logger.info("scheduler_started", cron=settings.sync_cron)

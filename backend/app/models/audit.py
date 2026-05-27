@@ -14,8 +14,9 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import text
 
 from .base import Base
 
@@ -57,22 +58,35 @@ class AuditLog(Base):
 
 
 class MessageLog(Base):
+    """Per-recipient notification log. Created as PENDING, sent asynchronously."""
+
     __tablename__ = "message_log"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    sender: Mapped[str] = mapped_column(String(20), nullable=False)
-    recipients: Mapped[list] = mapped_column(JSONB, nullable=False)
+    id: Mapped[str] = mapped_column(
+        UUID(as_uuid=False),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    meeting_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    event_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    recipient_emp_no: Mapped[str] = mapped_column(String(6), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    ref_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    ref_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     status: Mapped[str] = mapped_column(
-        Enum("SENT", "FAILED", "MOCK", name="message_status_enum"),
-        server_default="MOCK",
+        Enum("PENDING", "SENDING", "SENT", "FAILED", name="message_status_enum"),
+        server_default="PENDING",
         nullable=False,
     )
     retry_count: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime(timezone=False), nullable=True
+    )
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        Index("idx_message_log_recipient", "recipient_emp_no", "created_at"),
     )
 
 
