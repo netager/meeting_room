@@ -15,7 +15,7 @@
       "name": "notification-frontend",
       "status": "completed",
       "started_at": "2026-05-27T16:21:43+0900",
-      "completed_at": "2026-05-27T17:00:00+0900",
+      "completed_at": "2026-05-27T16:26:37+0900",
       "summary": "알림 프론트엔드 완성: NotificationBell(30초 폴링/unread뱃지/드롭다운5개미리보기)/Notifications 전체 목록 페이지/AppShell 상단바 통합"
     }
   ],
