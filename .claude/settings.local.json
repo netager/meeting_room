@@ -19,7 +19,8 @@
       "Bash(python3 scripts/execute.py 6-admin)",
       "Bash(tee /tmp/harness-6-admin.log)",
       "Bash(python3 scripts/execute.py 7-docker)",
-      "Bash(tee /tmp/harness-7-docker.log)"
+      "Bash(tee /tmp/harness-7-docker.log)",
+      "Bash(tee /tmp/harness-7-docker-retry.log)"
     ]
   }
 }
