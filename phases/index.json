@@ -35,7 +35,8 @@
     },
     {
       "dir": "6-admin",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-05-27T16:38:41+0900"
     },
     {
       "dir": "7-docker",
