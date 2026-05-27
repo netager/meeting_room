@@ -40,8 +40,9 @@
     },
     {
       "dir": "7-docker",
-      "status": "error",
-      "failed_at": "2026-05-27T16:45:14+0900"
+      "status": "completed",
+      "failed_at": "2026-05-27T16:45:14+0900",
+      "completed_at": "2026-05-27T21:55:39+0900"
     }
   ]
 }
