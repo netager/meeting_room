@@ -7,7 +7,7 @@
       "name": "notification-backend",
       "status": "completed",
       "started_at": "2026-05-27T16:10:27+0900",
-      "completed_at": "2026-05-27T16:22:00+0900",
+      "completed_at": "2026-05-27T16:21:43+0900",
       "summary": "알림 백엔드 완성: MessageLog 재설계(UUID PK/per-recipient/PENDING→SENT)/notification_service(Mock/실제모드·BackgroundTasks비동기발송·3회재시도)/5분주기scheduler retry/GET /api/notifications 알림목록API/Alembic마이그레이션"
     },
     {
