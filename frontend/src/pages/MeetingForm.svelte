@@ -9,6 +9,7 @@
   import { createMeeting, updateMeeting, getMeeting, getFiles, uploadFile } from '../lib/api/meetings.js'
   import Modal from '../lib/components/common/Modal.svelte'
   import RoomAvailabilityPanel from '../lib/components/rooms/RoomAvailabilityPanel.svelte'
+  import { generateUUID } from '../lib/utils/uuid.js'
 
   let { meetingId = null } = $props()
 
@@ -238,7 +239,7 @@
         status = 'invalid'
         error = '파일 크기가 50MB를 초과합니다.'
       }
-      return { id: crypto.randomUUID(), file, name: file.name, sizeStr: formatSize(file.size), progress: 0, status, error }
+      return { id: generateUUID(), file, name: file.name, sizeStr: formatSize(file.size), progress: 0, status, error }
     })
     fileItems = [...fileItems, ...newItems]
     isDirty = true

@@ -1,4 +1,5 @@
 import { showToast } from '../stores/toast.js'
+import { generateUUID } from '../utils/uuid.js'
 
 let _accessToken = null
 
@@ -31,7 +32,7 @@ async function _refreshAccessToken() {
   const res = await fetch('/api/auth/token/refresh', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Request-ID': crypto.randomUUID() },
+    headers: { 'X-Request-ID': generateUUID() },
   })
   if (!res.ok) {
     throw new Error('Refresh failed')
@@ -59,7 +60,7 @@ async function _parseErrorResponse(res) {
 
 export async function request(path, options = {}) {
   const headers = {
-    'X-Request-ID': crypto.randomUUID(),
+    'X-Request-ID': generateUUID(),
     ...options.headers,
   }
 

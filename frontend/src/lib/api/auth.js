@@ -1,11 +1,12 @@
 import { ApiError, post } from './client.js'
+import { generateUUID } from '../utils/uuid.js'
 
 export async function login(username, password) {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Request-ID': crypto.randomUUID(),
+      'X-Request-ID': generateUUID(),
     },
     body: JSON.stringify({ username, password }),
     credentials: 'include',
@@ -37,7 +38,7 @@ export async function refreshToken() {
   const res = await fetch('/api/auth/token/refresh', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Request-ID': crypto.randomUUID() },
+    headers: { 'X-Request-ID': generateUUID() },
   })
   if (!res.ok) {
     throw new Error('Refresh failed')
