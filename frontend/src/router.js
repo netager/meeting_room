@@ -16,6 +16,7 @@ const STATIC_ROUTES = new Set([
   '/rooms',
   '/room-management',
   '/admin',
+  '/notifications',
 ])
 
 // Dynamic route patterns — order matters (more specific first)

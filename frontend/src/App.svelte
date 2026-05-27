@@ -1,7 +1,8 @@
 <script>
   import { onMount } from 'svelte'
-  import { currentUser, initAuth, clearAuth } from './lib/stores/auth.js'
+  import { currentUser, isAuthenticated, initAuth, clearAuth } from './lib/stores/auth.js'
   import { currentRoute, routeParams, initRouter } from './router.js'
+  import { pollNotifications, stopPolling } from './lib/stores/notifications.js'
   import Toast from './lib/components/common/Toast.svelte'
   import AppShell from './lib/components/layout/AppShell.svelte'
   import Login from './pages/Login.svelte'
@@ -12,14 +13,20 @@
   import MeetingList from './pages/MeetingList.svelte'
   import MeetingForm from './pages/MeetingForm.svelte'
   import MeetingDetail from './pages/MeetingDetail.svelte'
+  import Notifications from './pages/Notifications.svelte'
 
   onMount(async () => {
     window.addEventListener('auth:session-expired', () => {
+      stopPolling()
       clearAuth()
     })
 
     await initAuth()
     initRouter()
+
+    if ($isAuthenticated) {
+      pollNotifications()
+    }
   })
 </script>
 
@@ -43,6 +50,8 @@
       <MeetingForm meetingId={$routeParams.id} />
     {:else if $currentRoute === '/meetings/:id'}
       <MeetingDetail meetingId={$routeParams.id} />
+    {:else if $currentRoute === '/notifications'}
+      <Notifications />
     {:else}
       <Dashboard />
     {/if}

@@ -4,6 +4,7 @@
   import { logout } from '../../api/auth.js'
   import { clearAuth } from '../../stores/auth.js'
   import { showToast } from '../../stores/toast.js'
+  import NotificationBell from './NotificationBell.svelte'
 
   let { children } = $props()
 
@@ -87,7 +88,18 @@
   </aside>
 
   <!-- Main content -->
-  <main class="flex-1 overflow-y-auto">
-    {@render children()}
-  </main>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top header bar -->
+    <header class="h-14 shrink-0 border-b border-neutral-800 flex items-center justify-end px-6 bg-[#0a0a0a]">
+      <div class="flex items-center gap-3">
+        <NotificationBell />
+        <span class="text-sm text-neutral-400">{$currentUser?.name || $currentUser?.emp_no}</span>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="flex-1 overflow-y-auto">
+      {@render children()}
+    </main>
+  </div>
 </div>
