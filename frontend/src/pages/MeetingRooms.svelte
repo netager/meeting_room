@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import { currentUser } from '../lib/stores/auth.js'
   import { showToast } from '../lib/stores/toast.js'
   import { listRooms, deleteRoom } from '../lib/api/meetingRooms.js'
@@ -90,12 +90,19 @@
     }
   }
 
-  onMount(loadRooms)
+  let _mounted = false
+
+  onMount(() => {
+    _mounted = true
+    loadRooms()
+  })
 
   $effect(() => {
-    // reload when statusFilter changes (after mount)
+    // statusFilter만 추적 — loading은 untrack으로 읽어 무한루프 방지
     statusFilter
-    if (!loading) loadRooms()
+    untrack(() => {
+      if (_mounted) loadRooms()
+    })
   })
 
   const canManage = $derived(
