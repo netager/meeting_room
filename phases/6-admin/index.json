@@ -15,7 +15,7 @@
       "name": "admin-frontend",
       "status": "completed",
       "started_at": "2026-05-27T16:32:03+0900",
-      "completed_at": "2026-05-27T16:50:00+0900",
+      "completed_at": "2026-05-27T16:38:41+0900",
       "summary": "관리자 UI 완성: 감사로그 탭(필터/테이블/상세JSONB모달) 추가. 직원 권한 토글(확인모달/본인변경차단) 완성. Admin.svelte 4탭 구조 완성"
     }
   ],
