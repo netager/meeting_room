@@ -7,7 +7,7 @@
       "name": "audit-backend",
       "status": "completed",
       "started_at": "2026-05-27T16:27:21+0900",
-      "completed_at": "2026-05-27T16:50:00+0900",
+      "completed_at": "2026-05-27T16:32:03+0900",
       "summary": "감사로그 조회 API 완성(필터/페이지네이션/단건조회). 직원권한관리 PUT API 추가. admin 라우터 완성"
     },
     {
