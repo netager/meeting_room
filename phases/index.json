@@ -29,8 +29,9 @@
     },
     {
       "dir": "5-notification",
-      "status": "error",
-      "failed_at": "2026-05-27T08:20:34+0900"
+      "status": "completed",
+      "failed_at": "2026-05-27T08:20:34+0900",
+      "completed_at": "2026-05-27T16:26:37+0900"
     },
     {
       "dir": "6-admin",
