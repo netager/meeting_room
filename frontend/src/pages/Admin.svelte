@@ -31,6 +31,9 @@
   let retireModal = $state(false)
   let retireLoading = $state(false)
 
+  // Permission confirmation modal
+  let permConfirmModal = $state({ open: false, field: '', newValue: false })
+
   // ── Departments ───────────────────────────────────────────────────────────────
   let departments = $state([])
   let deptTeams = $state({})
@@ -66,6 +69,13 @@
 
   let allDepts = $state([])
 
+  // ── Audit Logs ────────────────────────────────────────────────────────────────
+  let auditData = $state({ items: [], total: 0, page: 1, size: 20, pages: 0 })
+  let auditFilters = $state({ action: '', resource_type: '', actor_emp_no: '', date_from: '', date_to: '' })
+  let auditLoading = $state(false)
+  let auditDetailLog = $state(null)
+  let auditDetailOpen = $state(false)
+
   // ── Table headers ─────────────────────────────────────────────────────────────
   const empHeaders = [
     { key: 'emp_no', label: '행번' },
@@ -74,6 +84,15 @@
     { key: 'rank', label: '직급' },
     { key: 'status', label: '재직 상태' },
     { key: 'permissions', label: '권한' },
+  ]
+
+  const auditHeaders = [
+    { key: 'created_at', label: '시각' },
+    { key: 'action', label: '액션' },
+    { key: 'resource_type', label: '리소스' },
+    { key: 'resource_id', label: '리소스 ID' },
+    { key: 'actor', label: '수행자' },
+    { key: 'ip_address', label: 'IP' },
   ]
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────────
@@ -135,18 +154,31 @@
     }
   }
 
+  function handlePermToggle(field, newValue) {
+    // UX-level self-check (backend also returns 403)
+    if (selectedEmp?.emp_no === $currentUser?.emp_no) {
+      showToast('자신의 권한은 변경할 수 없습니다.', 'error')
+      return
+    }
+    permConfirmModal = { open: true, field, newValue }
+  }
+
   async function handleUpdatePermissions() {
     if (!selectedEmp) return
     updateLoading = true
+    const newPerms = { ...permForm, [permConfirmModal.field]: permConfirmModal.newValue }
     try {
       await employeesApi.updatePermissions(selectedEmp.emp_no, {
-        is_admin: permForm.is_admin,
-        is_room_manager: permForm.is_room_manager,
+        is_admin: newPerms.is_admin,
+        is_room_manager: newPerms.is_room_manager,
       })
-      showToast('권한이 업데이트되었습니다.')
+      permForm = newPerms
+      showToast('권한이 변경되었습니다.')
+      permConfirmModal = { open: false, field: '', newValue: false }
       await loadEmployees(empData.page)
     } catch (e) {
       showToast(e.message, 'error')
+      permConfirmModal = { open: false, field: '', newValue: false }
     } finally {
       updateLoading = false
     }
@@ -308,7 +340,8 @@
   async function loadSyncLogs() {
     syncLogsLoading = true
     try {
-      syncLogs = await adminApi.getAuditLogs({ action: 'BATCH_RUN', limit: 5 })
+      const result = await adminApi.getAuditLogs({ action: 'BATCH_RUN', size: 5 })
+      syncLogs = result.items ?? []
     } catch {
       syncLogs = []
     } finally {
@@ -381,11 +414,40 @@
     }
   }
 
+  // ── Audit Log functions ────────────────────────────────────────────────────────
+  async function loadAuditLogs(page = 1) {
+    auditLoading = true
+    try {
+      const result = await adminApi.getAuditLogs({
+        action: auditFilters.action || undefined,
+        resource_type: auditFilters.resource_type || undefined,
+        actor_emp_no: auditFilters.actor_emp_no || undefined,
+        date_from: auditFilters.date_from || undefined,
+        date_to: auditFilters.date_to || undefined,
+        page,
+        size: 20,
+      })
+      auditData = result
+    } catch (e) {
+      showToast(e.message, 'error')
+    } finally {
+      auditLoading = false
+    }
+  }
+
+  function openAuditDetail(log) {
+    auditDetailLog = log
+    auditDetailOpen = true
+  }
+
   function onTabChange(tab) {
     activeTab = tab
     if (tab === 'sync' && syncLogs.length === 0) {
       loadSyncLogs()
       loadStaging()
+    }
+    if (tab === 'audit' && auditData.items.length === 0) {
+      loadAuditLogs(1)
     }
   }
 
@@ -402,6 +464,19 @@
     if (!detail) return '정보 없음'
     return detail
   }
+
+  function formatDateTime(dt) {
+    if (!dt) return '—'
+    return dt.slice(0, 19).replace('T', ' ')
+  }
+
+  function permConfirmLabel() {
+    const name = selectedEmp?.name ?? ''
+    const field = permConfirmModal.field
+    const permName = field === 'is_admin' ? '관리자' : '회의실 담당자'
+    const action = permConfirmModal.newValue ? '부여' : '해제'
+    return `${name}의 ${permName} 권한을 ${action}하시겠습니까?`
+  }
 </script>
 
 <div class="px-6 py-8 max-w-5xl">
@@ -412,7 +487,7 @@
 
   <!-- Tabs -->
   <div class="flex gap-1 mb-6 border-b border-neutral-800">
-    {#each [['employees', '직원 관리'], ['departments', '부서·팀 관리'], ['sync', 'ETL 동기화']] as [tab, label] (tab)}
+    {#each [['employees', '직원 관리'], ['departments', '부서·팀 관리'], ['sync', 'ETL 동기화'], ['audit', '감사 로그']] as [tab, label] (tab)}
       <button
         onclick={() => onTabChange(tab)}
         class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px {activeTab === tab
@@ -717,8 +792,8 @@
             <div class="space-y-2">
               {#each syncLogs as log (log.id)}
                 <div class="flex items-start gap-3 text-xs">
-                  <span class="text-neutral-500 shrink-0 w-36">{log.created_at?.slice(0, 19).replace('T', ' ')}</span>
-                  <span class="text-neutral-400">{log.actor}</span>
+                  <span class="text-neutral-500 shrink-0 w-36">{formatDateTime(log.created_at)}</span>
+                  <span class="text-neutral-400">{log.actor_emp_no ?? log.actor}</span>
                   <span class="text-neutral-300 flex-1">{formatSyncDetail(log.detail)}</span>
                 </div>
               {/each}
@@ -816,6 +891,131 @@
       {/if}
     </div>
   {/if}
+
+  <!-- ── Tab: 감사 로그 ─────────────────────────────────────────────────────── -->
+  {#if activeTab === 'audit'}
+    <div class="space-y-4">
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3">
+        <select
+          bind:value={auditFilters.action}
+          class="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 px-3 py-2 text-sm focus:outline-none focus:border-neutral-600"
+        >
+          <option value="">전체 액션</option>
+          <option value="LOGIN">LOGIN</option>
+          <option value="LOGIN_FAIL">LOGIN_FAIL</option>
+          <option value="LOGOUT">LOGOUT</option>
+          <option value="CREATE">CREATE</option>
+          <option value="UPDATE">UPDATE</option>
+          <option value="DELETE">DELETE</option>
+          <option value="DOWNLOAD">DOWNLOAD</option>
+          <option value="BATCH_RUN">BATCH_RUN</option>
+        </select>
+
+        <select
+          bind:value={auditFilters.resource_type}
+          class="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 px-3 py-2 text-sm focus:outline-none focus:border-neutral-600"
+        >
+          <option value="">전체 리소스</option>
+          <option value="Meeting">Meeting</option>
+          <option value="MeetingRoom">MeetingRoom</option>
+          <option value="Employee">Employee</option>
+          <option value="Department">Department</option>
+          <option value="Team">Team</option>
+        </select>
+
+        <input
+          type="text"
+          bind:value={auditFilters.actor_emp_no}
+          placeholder="수행자 행번"
+          class="rounded-lg bg-neutral-900 border border-neutral-800 text-white placeholder:text-neutral-500 px-3 py-2 text-sm focus:outline-none focus:border-neutral-600 w-36"
+        />
+
+        <input
+          type="date"
+          bind:value={auditFilters.date_from}
+          class="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 px-3 py-2 text-sm focus:outline-none focus:border-neutral-600"
+        />
+        <span class="text-neutral-500 text-sm">~</span>
+        <input
+          type="date"
+          bind:value={auditFilters.date_to}
+          class="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 px-3 py-2 text-sm focus:outline-none focus:border-neutral-600"
+        />
+
+        <button
+          onclick={() => loadAuditLogs(1)}
+          class="rounded-lg bg-white text-black text-sm font-medium hover:bg-neutral-200 px-4 py-2 transition-colors"
+        >
+          검색
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="rounded-lg bg-[#141414] border border-neutral-800">
+        {#if auditLoading}
+          <SkeletonTable rows={10} cols={6} />
+        {:else}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr>
+                  {#each auditHeaders as h (h.key)}
+                    <th class="px-4 py-3 text-left border-b border-neutral-800 text-xs text-neutral-500 uppercase tracking-wider">
+                      {h.label}
+                    </th>
+                  {/each}
+                </tr>
+              </thead>
+              <tbody>
+                {#if auditData.items.length === 0}
+                  <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-neutral-500">
+                      조회 조건에 맞는 감사 로그가 없습니다.
+                    </td>
+                  </tr>
+                {:else}
+                  {#each auditData.items as log (log.id)}
+                    <tr
+                      onclick={() => openAuditDetail(log)}
+                      class="border-b border-neutral-800/50 hover:bg-[#1f1f1f] transition-colors cursor-pointer"
+                    >
+                      <td class="px-4 py-3 text-neutral-400 text-xs whitespace-nowrap">{formatDateTime(log.created_at)}</td>
+                      <td class="px-4 py-3">
+                        <span class="rounded-md text-xs px-2 py-1 border
+                          {log.action === 'LOGIN' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                           log.action === 'LOGIN_FAIL' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                           log.action === 'DELETE' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                           log.action === 'CREATE' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                           log.action === 'BATCH_RUN' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                           'bg-neutral-800 text-neutral-400 border-neutral-700'}">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-neutral-300">{log.resource_type ?? '—'}</td>
+                      <td class="px-4 py-3 text-neutral-500 text-xs font-mono">{log.resource_id ? log.resource_id.slice(0, 8) + '…' : '—'}</td>
+                      <td class="px-4 py-3 text-neutral-300">
+                        {log.actor_name ? `${log.actor_name} (${log.actor_emp_no})` : (log.actor_emp_no ?? '—')}
+                      </td>
+                      <td class="px-4 py-3 text-neutral-500 text-xs">{log.ip_address ?? '—'}</td>
+                    </tr>
+                  {/each}
+                {/if}
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4">
+            <Pagination
+              page={auditData.page}
+              pages={auditData.pages}
+              total={auditData.total}
+              onPageChange={(p) => loadAuditLogs(p)}
+            />
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
 </div>
 
 <!-- Employee slide panel -->
@@ -868,14 +1068,15 @@
       <div>
         <p class="text-xs text-neutral-500 uppercase tracking-wider mb-3">권한 설정</p>
         <div class="space-y-3">
-          <label class="flex items-center justify-between cursor-pointer">
+          <div class="flex items-center justify-between">
             <div>
               <span class="text-sm text-white">Admin 권한</span>
               <p class="text-xs text-neutral-500">모든 데이터 CRUD 및 권한 관리</p>
             </div>
             <button
-              onclick={() => { permForm.is_admin = !permForm.is_admin }}
-              class="relative w-10 h-5 rounded-full transition-colors {permForm.is_admin ? 'bg-white' : 'bg-neutral-700'}"
+              onclick={() => handlePermToggle('is_admin', !permForm.is_admin)}
+              disabled={selectedEmp.status === 'RETIRED'}
+              class="relative w-10 h-5 rounded-full transition-colors disabled:opacity-40 {permForm.is_admin ? 'bg-white' : 'bg-neutral-700'}"
               role="switch"
               aria-checked={permForm.is_admin}
             >
@@ -883,15 +1084,16 @@
                 class="absolute top-0.5 w-4 h-4 rounded-full bg-neutral-900 transition-transform {permForm.is_admin ? 'translate-x-5' : 'translate-x-0.5'}"
               ></span>
             </button>
-          </label>
-          <label class="flex items-center justify-between cursor-pointer">
+          </div>
+          <div class="flex items-center justify-between">
             <div>
               <span class="text-sm text-white">회의실 담당자</span>
               <p class="text-xs text-neutral-500">담당 부서 회의실·집기 관리</p>
             </div>
             <button
-              onclick={() => { permForm.is_room_manager = !permForm.is_room_manager }}
-              class="relative w-10 h-5 rounded-full transition-colors {permForm.is_room_manager ? 'bg-white' : 'bg-neutral-700'}"
+              onclick={() => handlePermToggle('is_room_manager', !permForm.is_room_manager)}
+              disabled={selectedEmp.status === 'RETIRED'}
+              class="relative w-10 h-5 rounded-full transition-colors disabled:opacity-40 {permForm.is_room_manager ? 'bg-white' : 'bg-neutral-700'}"
               role="switch"
               aria-checked={permForm.is_room_manager}
             >
@@ -899,15 +1101,8 @@
                 class="absolute top-0.5 w-4 h-4 rounded-full bg-neutral-900 transition-transform {permForm.is_room_manager ? 'translate-x-5' : 'translate-x-0.5'}"
               ></span>
             </button>
-          </label>
+          </div>
         </div>
-        <button
-          onclick={handleUpdatePermissions}
-          disabled={updateLoading || selectedEmp.status === 'RETIRED'}
-          class="mt-4 rounded-lg bg-white text-black text-sm font-medium hover:bg-neutral-200 px-4 py-2 transition-colors disabled:opacity-50"
-        >
-          {updateLoading ? '저장 중...' : '권한 저장'}
-        </button>
         {#if selectedEmp.status === 'RETIRED'}
           <p class="text-xs text-neutral-500 mt-2">퇴직 직원은 권한을 변경할 수 없습니다.</p>
         {/if}
@@ -978,6 +1173,77 @@
       class="rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20 hover:bg-red-500/20 px-4 py-2 transition-colors disabled:opacity-50"
     >
       {deleteModal.loading ? '삭제 중...' : '삭제'}
+    </button>
+  {/snippet}
+</Modal>
+
+<!-- Permission change confirm modal -->
+<Modal
+  title="권한 변경"
+  open={permConfirmModal.open}
+  onClose={() => { permConfirmModal = { open: false, field: '', newValue: false } }}
+>
+  <p class="text-sm text-neutral-300">
+    {permConfirmLabel()}
+  </p>
+  {#snippet footer()}
+    <button
+      onclick={() => { permConfirmModal = { open: false, field: '', newValue: false } }}
+      class="rounded-lg border border-neutral-700 text-neutral-300 text-sm hover:bg-[#1f1f1f] px-4 py-2 transition-colors"
+    >
+      취소
+    </button>
+    <button
+      onclick={handleUpdatePermissions}
+      disabled={updateLoading}
+      class="rounded-lg bg-white text-black text-sm font-medium hover:bg-neutral-200 px-4 py-2 transition-colors disabled:opacity-50"
+    >
+      {updateLoading ? '변경 중...' : '변경'}
+    </button>
+  {/snippet}
+</Modal>
+
+<!-- Audit log detail modal -->
+<Modal
+  title="감사 로그 상세"
+  open={auditDetailOpen}
+  onClose={() => { auditDetailOpen = false }}
+>
+  {#if auditDetailLog}
+    <div class="space-y-4">
+      <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs">
+        <span class="text-neutral-500">ID</span>
+        <span class="text-neutral-300 font-mono">{auditDetailLog.id}</span>
+        <span class="text-neutral-500">시각</span>
+        <span class="text-neutral-300">{formatDateTime(auditDetailLog.created_at)}</span>
+        <span class="text-neutral-500">액션</span>
+        <span class="text-neutral-300">{auditDetailLog.action}</span>
+        <span class="text-neutral-500">리소스</span>
+        <span class="text-neutral-300">{auditDetailLog.resource_type ?? '—'}</span>
+        <span class="text-neutral-500">리소스 ID</span>
+        <span class="text-neutral-300 font-mono break-all">{auditDetailLog.resource_id ?? '—'}</span>
+        <span class="text-neutral-500">수행자</span>
+        <span class="text-neutral-300">
+          {auditDetailLog.actor_name ? `${auditDetailLog.actor_name} (${auditDetailLog.actor_emp_no})` : (auditDetailLog.actor_emp_no ?? '—')}
+        </span>
+        <span class="text-neutral-500">IP</span>
+        <span class="text-neutral-300">{auditDetailLog.ip_address ?? '—'}</span>
+      </div>
+
+      {#if auditDetailLog.detail !== null && auditDetailLog.detail !== undefined}
+        <div>
+          <p class="text-xs text-neutral-500 uppercase tracking-wider mb-2">상세 내용</p>
+          <pre class="text-xs font-mono bg-neutral-900 border border-neutral-800 p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap text-neutral-300">{typeof auditDetailLog.detail === 'string' ? auditDetailLog.detail : JSON.stringify(auditDetailLog.detail, null, 2)}</pre>
+        </div>
+      {/if}
+    </div>
+  {/if}
+  {#snippet footer()}
+    <button
+      onclick={() => { auditDetailOpen = false }}
+      class="rounded-lg border border-neutral-700 text-neutral-300 text-sm hover:bg-[#1f1f1f] px-4 py-2 transition-colors"
+    >
+      닫기
     </button>
   {/snippet}
 </Modal>
