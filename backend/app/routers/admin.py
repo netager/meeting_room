@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import math
+from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import get_db
 from app.dependencies import require_admin
-from app.models import AuditLog
-from app.repositories import org_repo
+from app.repositories import audit_repo, org_repo
+from app.schemas.admin import AuditLogResponse, PaginatedAuditLogs
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -38,6 +39,10 @@ async def update_employee_permissions(
     user=Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    직원 is_admin / is_room_manager 권한 변경.
+    AuditLog(UPDATE, Employee) 기록은 org_repo.update_permissions 에서 처리.
+    """
     from app.schemas.org import EmployeeResponse
 
     emp = await org_repo.update_permissions(
@@ -49,33 +54,54 @@ async def update_employee_permissions(
 # ── 감사 로그 조회 ─────────────────────────────────────────────────────────────
 
 
-@router.get("/audit-logs")
+@router.get("/audit-logs", response_model=PaginatedAuditLogs)
 async def list_audit_logs(
-    action: Optional[str] = None,
-    limit: int = 20,
+    action: Optional[str] = Query(None, description="LOGIN / LOGIN_FAIL / CREATE / UPDATE / DELETE / DOWNLOAD / BATCH_RUN"),
+    resource_type: Optional[str] = Query(None, description="대상 테이블명 (예: Meeting, Employee)"),
+    actor_emp_no: Optional[str] = Query(None, description="행위자 행번 또는 admin"),
+    date_from: Optional[date] = Query(None, description="조회 시작일 (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="조회 종료일 (YYYY-MM-DD)"),
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=100),
     _user=Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    if limit > 100:
-        limit = 100
-    q = select(AuditLog)
-    if action:
-        q = q.where(AuditLog.action == action)
-    q = q.order_by(desc(AuditLog.created_at)).limit(limit)
-    result = await db.execute(q)
-    logs = result.scalars().all()
-    return [
-        {
-            "id": log.id,
-            "actor": log.actor,
-            "action": log.action,
-            "target_table": log.target_table,
-            "target_id": log.target_id,
-            "detail": log.detail,
-            "created_at": log.created_at.isoformat() if log.created_at else None,
-        }
-        for log in logs
-    ]
+    """감사 로그 목록 조회 (admin 전용). 최신순 정렬."""
+    items, total = await audit_repo.get_audit_logs(
+        db,
+        action=action,
+        resource_type=resource_type,
+        actor_emp_no=actor_emp_no,
+        date_from=date_from,
+        date_to=date_to,
+        page=page,
+        size=size,
+    )
+    pages = math.ceil(total / size) if total else 0
+    return PaginatedAuditLogs(
+        items=[AuditLogResponse.from_log(log, actor_name) for log, actor_name in items],
+        total=total,
+        page=page,
+        size=size,
+        pages=pages,
+    )
+
+
+@router.get("/audit-logs/{log_id}", response_model=AuditLogResponse)
+async def get_audit_log(
+    log_id: int,
+    _user=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """감사 로그 단건 조회 (detail JSONB 포함, admin 전용)."""
+    row = await audit_repo.get_audit_log(log_id, db)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "NOT_FOUND", "message": "감사 로그를 찾을 수 없습니다"}},
+        )
+    log, actor_name = row
+    return AuditLogResponse.from_log(log, actor_name)
 
 
 # ── ETL 동기화 ─────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 from app.repositories import (
+    audit_repo,
     auth_repo,
     org_repo,
     staging_repo,
@@ -9,6 +10,7 @@ from app.repositories import (
 )
 
 __all__ = [
+    "audit_repo",
     "auth_repo",
     "org_repo",
     "staging_repo",
