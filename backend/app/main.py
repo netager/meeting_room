@@ -137,6 +137,14 @@ async def health_check():
 
 
 # 정적 파일 서빙 (Svelte 빌드) — frontend/dist가 없으면 조건부 마운트
-_static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
-if os.path.exists(_static_dir):
+# Docker: /app/static/, Dev: <project>/frontend/dist/
+_static_candidates = [
+    os.path.join(os.path.dirname(__file__), "..", "static"),              # Docker: /app/static/
+    os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"),  # Dev: project/frontend/dist
+]
+_static_dir = next(
+    (os.path.normpath(d) for d in _static_candidates if os.path.isdir(d)),
+    None,
+)
+if _static_dir:
     app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")

@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: meetingroom
+      POSTGRES_USER: meetingroom
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meetingroom"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://meetingroom:${POSTGRES_PASSWORD:-changeme}@db:5432/meetingroom
+      SECRET_KEY: ${SECRET_KEY}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8000}
+      APP_ENV: ${APP_ENV:-production}
+      UPLOAD_DIR: /app/uploads
+      SYNC_CRON: ${SYNC_CRON:-0 2 * * *}
+      INTERNAL_MSG_API_URL: ${INTERNAL_MSG_API_URL:-}
+      ADMIN_RESET_TOKEN: ${ADMIN_RESET_TOKEN:-}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads_data:

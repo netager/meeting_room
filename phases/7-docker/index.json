@@ -5,10 +5,10 @@
     {
       "step": 0,
       "name": "docker-setup",
-      "status": "error",
-      "started_at": "2026-05-27T16:44:57+0900",
-      "error_message": "[3회 시도 후 실패] Step did not update status",
-      "failed_at": "2026-05-27T16:45:14+0900"
+      "status": "completed",
+      "started_at": "2026-05-27T21:46:49+0900",
+      "completed_at": "2026-05-27T21:55:00+0900",
+      "summary": "Multi-stage Dockerfile(Node빌드+Python앱+curl+libmagic)/docker-compose(app+db)/entrypoint.sh(마이그레이션 자동 실행)/StaticFiles SPA fallback(개발·Docker 이중 경로)/볼륨(postgres_data+uploads_data)/HEALTHCHECK curl 정상 동작 확인"
     }
   ],
   "created_at": "2026-05-27T16:44:57+0900"
