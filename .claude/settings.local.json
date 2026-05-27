@@ -15,7 +15,9 @@
       "Bash(tee /tmp/harness-4-meeting-retry.log)",
       "Bash(python3 scripts/execute.py 5-notification)",
       "Bash(tee /tmp/harness-5-notification.log)",
-      "Bash(tee /tmp/harness-5-notification-retry.log)"
+      "Bash(tee /tmp/harness-5-notification-retry.log)",
+      "Bash(python3 scripts/execute.py 6-admin)",
+      "Bash(tee /tmp/harness-6-admin.log)"
     ]
   }
 }
